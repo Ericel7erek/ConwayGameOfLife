@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conway's Game of Life in Three.js</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #playPauseButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button id="playPauseButton">Pause</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, grid = [], gridSize = 50, cellSize = 2, cubes = [];
+        let raycaster, mouse, intersectedObject = null;
+        let isAnimating = true; // Flag to control animation
+
+        window.onload = function() {
+            // Set up the scene, camera, and renderer
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Create a grid of cubes (cells)
+            createGrid();
+
+            // Set up raycasting
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Set camera position
+            camera.position.z = 200;
+            camera.position.x = 0;
+            camera.position.y = 0;
+
+            // Event listener for mouse clicks
+            window.addEventListener('click', onClick, false);
+
+            // Start the animation loop
+            animate();
+
+            // Button for toggling animation
+            const playPauseButton = document.getElementById('playPauseButton');
+            playPauseButton.addEventListener('click', toggleAnimation);
+        };
+
+        // Function to create the grid of cubes
+        function createGrid() {
+            for (let x = 0; x < gridSize; x++) {
+                grid[x] = [];
+                for (let y = 0; y < gridSize; y++) {
+                    const geometry = new THREE.BoxGeometry(cellSize, cellSize, cellSize);
+                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 1, transparent: true });
+                    const cube = new THREE.Mesh(geometry, material);
+
+                    cube.position.set(x * cellSize - (gridSize * cellSize) / 2, y * cellSize - (gridSize * cellSize) / 2, 0);
+                    scene.add(cube);
+
+                    grid[x][y] = 0;  // Initialize all cells as dead
+                    cubes.push(cube); // Store cubes to easily access them later
+                }
+            }
+
+            // Randomize the initial grid with some live cells
+            for (let x = 0; x < gridSize; x++) {
+                for (let y = 0; y < gridSize; y++) {
+                    if (Math.random() > 0.8) {
+                        grid[x][y] = 1;  // Randomly set some cells to be alive
+                        cubes[x * gridSize + y].material.opacity = 1; // Make the cube visible (alive)
+                    }
+                }
+            }
+        }
+
+        // Function to update the grid based on Conway's rules
+        function updateGrid() {
+            const newGrid = grid.map(arr => [...arr]);
+
+            for (let x = 0; x < gridSize; x++) {
+                for (let y = 0; y < gridSize; y++) {
+                    const neighbors = countNeighbors(x, y);
+                    if (grid[x][y] === 1) {
+                        newGrid[x][y] = (neighbors === 2 || neighbors === 3) ? 1 : 0;
+                    } else {
+                        newGrid[x][y] = (neighbors === 3) ? 1 : 0;
+                    }
+
+                    // Update the visibility of the cubes
+                    if (newGrid[x][y] === 1) {
+                        cubes[x * gridSize + y].material.opacity = 1; // Make the cube visible (alive)
+                    } else {
+                        cubes[x * gridSize + y].material.opacity = 0; // Make the cube invisible (dead)
+                    }
+                }
+            }
+
+            grid = newGrid; // Update grid for the next generation
+        }
+
+        // Function to count neighbors for a cell
+        function countNeighbors(x, y) {
+            let sum = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+
+                    const nx = (x + i + gridSize) % gridSize;
+                    const ny = (y + j + gridSize) % gridSize;
+                    sum += grid[nx][ny];
+                }
+            }
+            return sum;
+        }
+
+        // Handle mouse click on the grid
+        function onClick(event) {
+            // Convert mouse coordinates to normalized device coordinates (-1 to +1)
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Update the raycaster with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+
+            // Calculate objects intersected by the raycaster
+            const intersects = raycaster.intersectObjects(cubes);
+
+            if (intersects.length > 0) {
+                const cube = intersects[0].object;
+                const index = cubes.indexOf(cube);
+                const x = Math.floor(index / gridSize);
+                const y = index % gridSize;
+
+                // Toggle the cell state
+                grid[x][y] = grid[x][y] === 0 ? 1 : 0;
+
+                // Update cube visibility
+                cube.material.opacity = grid[x][y] === 1 ? 1 : 0;
+            }
+        }
+
+        // Toggle the animation
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            const playPauseButton = document.getElementById('playPauseButton');
+            playPauseButton.textContent = isAnimating ? 'Pause' : 'Play';
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isAnimating) {
+                updateGrid(); // Update the grid for each frame
+            }
+
+            renderer.render(scene, camera); // Render the scene
+        }
+
+        // Handle window resizing
+        window.addEventListener('resize', function() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
