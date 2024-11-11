@@ -18,7 +18,7 @@ Each version brings Conway's famous rules into interactive, animated form. Explo
 - [How It Works](#how-it-works)
 
 ---
-
+<a name="about-the-game-of-life"></a>
 ## About the Game of Life 🌱
 
 The **Game of Life**, devised by the mathematician **John Conway**, is a zero-player game where cells on a grid evolve through generations based on a set of rules:
@@ -29,7 +29,7 @@ The **Game of Life**, devised by the mathematician **John Conway**, is a zero-pl
 Through these simple rules, the Game of Life simulates the behavior of cellular life, creating endless patterns, oscillations, and even "gliders" that seem to move across the grid!
 
 ---
-
+<a name="project-structure"></a>
 ## Project Structure 🗂
 conways-game-of-life/<br>
 ├── README.md # Specific instructions for Pygame 
@@ -39,11 +39,12 @@ conways-game-of-life/<br>
 ├── index.html # Main file for Three.js version 
 
 ---
-
+<a name="getting-started"></a>
 ## Getting Started 🚀
 
 To get started with either version of Conway's Game of Life, follow the steps below.
 
+<a name="running-the-pygame-version"></a>
 ### Running the Pygame Version 🐍
 
 1. **Install Python**: Make sure Python is installed on your machine. You can download it from [python.org](https://www.python.org/).
@@ -56,10 +57,12 @@ To get started with either version of Conway's Game of Life, follow the steps be
    ```bash
    pip3 install pygame
    ```
+<a name="running-the-threejs-version"></a>
 ### Running the Threejs Version 🌐
   Open in Browser:
   <br>
   Simply open the index.html file located in the threejs_version folder with your preferred web browser.
+<a name="how-it-works"></a>
 ### How It Works ⚙️
 # Pygame Version
 **Grid**: Implemented as a 2D array, where each cell is either alive or dead.<br>
